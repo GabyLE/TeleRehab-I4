@@ -1,0 +1,15 @@
+Flask
+flask_pymongo
+dnspython
+bson
+asyncua
+pyserials
+aioflask
+
+npm install @mui/material @emotion/react @emotion/styled
+@mui/styles
+@emotion/react
+@emotion/styled
+@mui/icons-material
+@material-ui/core
+@mui/x-data-grid

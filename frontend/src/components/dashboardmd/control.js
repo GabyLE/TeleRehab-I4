@@ -35,7 +35,6 @@ export const Control = () => {
         data.map((item) => {
             setAngulo(item.angulo);
             setTiempo(item.tiempoActual);
-            setVelocidad(item.velocidad);
         });
       }
 

@@ -8,6 +8,16 @@ from bson.objectid import ObjectId
 import bd
 from datetime import datetime
 
+# VARIABLES GLOBALES
+tempMaxMotor = 50
+inclMax = 10
+FLEX = 0
+EXT = 0
+VEL = 0
+TIM = 0
+SOST = 0
+PLAY = 0
+
 # Create class to wrap serial read and write async
 class SafeSerial:
     def __init__(self, url: str, baudrate: int):
@@ -50,22 +60,31 @@ def send_parameters(serial: SafeSerial,flexN,extN,velN,timN,sostN,playN):
             res = await serial.readline()
             trama = str(res.decode()).strip()
             arr_vals = getValues(trama, ":", "=")
-            flexR = int(arr_vals[0])
-            extR = int(arr_vals[1])
-            velR = int(arr_vals[2])
-            tim = int(arr_vals[3])
-            sostR = int(arr_vals[4])
-            playR = int(arr_vals[5])
+            FLEX = int(arr_vals[4])
+            EXT = int(arr_vals[5])
+            VEL = int(arr_vals[6])
+            TIM = int(arr_vals[7])
+            SOST = int(arr_vals[8])
+            PLAY = play
                     
-            await flexN.set_value(flexR, ua.VariantType.Int64)
-            await extN.set_value(extR, ua.VariantType.Int64)
-            await velN.set_value(velR, ua.VariantType.Int64)
-            await timN.set_value(tim, ua.VariantType.Int64)
-            await sostN.set_value(sostR, ua.VariantType.Int64)
-            await playN.set_value(playR, ua.VariantType.Int64)
+            await flexN.set_value(FLEX, ua.VariantType.Int64)
+            await extN.set_value(EXT, ua.VariantType.Int64)
+            await velN.set_value(VEL, ua.VariantType.Int64)
+            await timN.set_value(TIM, ua.VariantType.Int64)
+            await sostN.set_value(SOST, ua.VariantType.Int64)
+            await playN.set_value(PLAY, ua.VariantType.Int64)
             return str(res.decode())
 
     return set_params
+
+# async def get_params(flexN,extN,velN,timN,sostN,playN):
+#     flex = await flexN.get_value()
+#     ext = await extN.get_value()
+#     vel = await velN.get_value()
+#     tim = await timN.get_value()
+#     sost = await sostN.get_value()
+#     play = await playN.get_value()
+#     return flex,ext,vel,tim,sost,play
 
 def create_get_idSesion(node):
     @uamethod
@@ -75,20 +94,34 @@ def create_get_idSesion(node):
     return get_idSesion
 
 
-def updateSensors(ang, vel, tempM, incl, tiem, id):
+def updateSensors(ang, corr, tempM, incl, tiem, id):
     bd.bd.sesiones.update_one(
         {"_id": ObjectId(id)},
         {'$set': {
             'sensores':{
                 'angulo': ang,
-                'velocidad': vel,
+                'corriente': corr,
                 'tiempoActual': tiem,
                 'inclinacion': incl,
                 'temperaturaMotor': tempM,
             }
         }}
-    
     )
+    bd.bd.data.update_one(
+        {"id_sesion": id},
+        {
+            '$push':{
+                'angulo': ang,
+                'corriente': corr,
+                'tiempoActual': tiem,
+                'inclinacion': incl,
+                'temperaturaMotor': tempM,
+            }
+        }
+
+    )
+    
+    
 
 def updateStates(motor, alin, id):
     bd.bd.sesiones.update_one(
@@ -100,7 +133,18 @@ def updateStates(motor, alin, id):
             }
         }}
     )
+    bd.bd.data.update_one(
+        {"id_sesion": id},
+        {
+            '$push':{
+                'estadoMotor': motor,
+                'estadoInclinacion': alin
+            }
+        }
 
+    )
+    
+# Obtener valores de la trama enviada por el controlador
 def getValues(trama, sep1, sep2):
     splited_trama = trama.split(sep1)
     arr_valores = []
@@ -111,20 +155,55 @@ def getValues(trama, sep1, sep2):
 
     return arr_valores
 
-def estadoTemperaturaMotor(valor):
-    if valor < 300:
-        return 1
-    elif valor >= 300 and valor:
-        return 2
 
-def estadoAlineacion(valor):
-    if valor < 300:
+async def check_tempMotor(serial: SafeSerial,tempMN, esTempMN, playN):
+    valor = await tempMN.get_value()
+    #flex,ext,vel,tiem,sost,play = await get_params(flexN,extN,velN,timN,sostN,playN)
+    # buen funcionamiento
+    if valor < tempMaxMotor:
+        await esTempMN.set_value(1, ua.VariantType.Int64)
         return 1
-    elif valor >= 300 and valor:
+    # enviar a posision de seguridad
+    elif valor >= tempMaxMotor:
+        await esTempMN.set_value(2, ua.VariantType.Int64)
+        loop = asyncio.get_event_loop()
+        async with serial.lock:
+            await serial.write(f"<S&{FLEX}&{EXT}&{VEL}&{TIM}&{SOST}&4>".encode())
+            # res = await serial.readline()
+            # trama = str(res.decode()).strip()
+            # arr_vals = getValues(trama, ":", "=")
+            
+        
+            # ctrlR = int(arr_vals[2])
+            # if ctrlR == 2:
+            await playN.set_value(4, ua.VariantType.Int64)
+            
+        return 2
+async def check_alineacion(serial: SafeSerial,alinMN, esAlinMN, playN):
+    valor = await alinMN.get_value()
+    #flex,ext,vel,tiem,sost,play = await get_params(flexN,extN,velN,timN,sostN,playN)
+    # buen funcionamiento
+    if valor < inclMax:
+        await esAlinMN.set_value(1, ua.VariantType.Int64)
+        return 1
+    # enviar a posision de seguridad
+    elif valor >= inclMax:
+        await esAlinMN.set_value(2, ua.VariantType.Int64)
+        loop = asyncio.get_event_loop()
+        async with serial.lock:
+            await serial.write(f"<S&{FLEX}&{EXT}&{VEL}&{TIM}&{SOST}&4>".encode())
+            # res = await serial.readline()
+            # trama = str(res.decode()).strip()
+            # arr_vals = getValues(trama, ":", "=")
+            
+            # ctrlR = int(arr_vals[2])
+            # if ctrlR == 2:
+            await playN.set_value(4, ua.VariantType.Int64)
+            
         return 2
 
 async def main():
-    print("Available loggers are: ", logging.Logger.manager.loggerDict.keys())
+    #print("Available loggers are: ", logging.Logger.manager.loggerDict.keys())
     # Create serial connection
     serial = SafeSerial(
         os.environ.get("SERIAL") if os.environ.get("SERIAL") else "COM4",
@@ -213,14 +292,22 @@ async def main():
     sensor_angulo_prop = await sensor_angulo.add_property(idx, "grados","grados")
     await sensor_angulo.set_writable()
     # VELOCIDAD
-    sensor_velocidad = await sensor.add_variable(idx, "Velocidad Actual",0)
-    sensor_velocidad_prop = await sensor_velocidad.add_property(idx, "grados/minuto","grados/minuto")
-    await sensor_velocidad.set_writable()
+    sensor_corriente = await sensor.add_variable(idx, "Corriente Actual",0)
+    sensor_corriente_prop = await sensor_corriente.add_property(idx, "amperios","amperios")
+    await sensor_corriente.set_writable()
     # TIEMPO
     sensor_tiempo = await sensor.add_variable(idx, "Tiempo",0)
     sensor_tiempo_prop = await sensor_tiempo.add_property(idx, "segundos","segundos")
     await sensor_tiempo.set_writable()
-    
+   # ACTUALIZA BASE DE DATOS
+    # await sensor.add_method(
+    #     idx,
+    #     "UpdateDataBase",
+    #     updateSensors(Serial, ang, vel, tempM, incl, tiem, id)
+    #     update(serial, params_flexion, params_extension, params_velocidad, params_tiempo, params_sostenimiento, params_play),
+    #     [ua.VariantType.Int64, ua.VariantType.Int64, ua.VariantType.Int64, ua.VariantType.Int64, ua.VariantType.Int64, ua.VariantType.Int64],
+    #     [ua.VariantType.String]
+    # ) 
    
 
     node = server.get_objects_node()
@@ -239,7 +326,7 @@ async def main():
     # Initialize OPC-UA server
     async with server:
         await asyncio.sleep(0.1)
-        # Pool for LED state
+        
         while True:
             await asyncio.sleep(20)
             try:
@@ -249,33 +336,31 @@ async def main():
                     res = await serial.readline()
                     trama = str(res.decode()).strip()
                     arr_vals = getValues(trama, ":", "=")
-                    ang = int(arr_vals[0])
-                    vel = int(arr_vals[1])
-                    tempM = int(arr_vals[2])
-                    tiem = int(arr_vals[3])
-                    incl = int(arr_vals[4])
+                    print(arr_vals)
+                    ang = int(arr_vals[3])
+                    corr = int(arr_vals[11])
+                    tempM = int(arr_vals[9])
+                    fullTime = arr_vals[12]+arr_vals[13]
+                    tiem = int(fullTime)
+                    incl = int(arr_vals[10])
                     
                 await sensor_tempMotor.set_value(tempM, ua.VariantType.Int64)
-                await sensor_inclinacion.set_value(vel, ua.VariantType.Int64)
+                await sensor_inclinacion.set_value(incl, ua.VariantType.Int64)
                 await sensor_angulo.set_value(ang, ua.VariantType.Int64)
                 await sensor_tiempo.set_value(tiem, ua.VariantType.Int64)
-                await sensor_velocidad.set_value(incl, ua.VariantType.Int64)
+                await sensor_corriente.set_value(corr, ua.VariantType.Int64)
 
-
-                 # revisar Temperatura
-                temperaturaMotor = await sensor_tempMotor.get_value()
-                estadoMotor = estadoTemperaturaMotor(temperaturaMotor)
-                await sensor_tempMotor_estado.set_value(estadoMotor, ua.VariantType.Int64)
-
+                
+                # revisar Temperatura
+                estadoMotor = await check_tempMotor(serial,sensor_tempMotor, sensor_tempMotor_estado, params_play)
+                
                 # revisar Alineación
-                alineacion = await sensor_inclinacion.get_value()
-                estadoInclinacion = estadoAlineacion(alineacion)
-                await sensor_inclinacion_estado.set_value(estadoInclinacion, ua.VariantType.Int64)
-
+                estadoInclinacion = await check_alineacion(serial,sensor_inclinacion, sensor_inclinacion_estado, params_play)
+                
                 idSesion = await params_idSesion.get_value()
                 print("id sesion: {}".format(idSesion))
                 if idSesion != "":
-                    updateSensors(ang, vel, tempM, tiem, incl, idSesion)
+                    updateSensors(ang, corr, tempM, incl, tiem, idSesion)
                     updateStates(estadoMotor, estadoInclinacion,idSesion)
 
 

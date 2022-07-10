@@ -16,7 +16,8 @@ CORS(app)
 usuarios = bd.db.usuarios
 # coleccion sesiones
 sesiones = bd.db.sesiones
-
+# colección data
+data = bd.db.data
 # USUARIO
 @app.route("/usuarios/registro", methods=['POST'])
 def registrar_usuario():
@@ -136,6 +137,16 @@ def add_session_md():
         }
     }
     _id = sesiones.insert_one(sesion_doc).inserted_id
+    data.insert_one({
+        'id_sesion': str(_id),
+        'angulo': [],
+        'velocidad': [],
+        'tiempoActual': [],
+        'inclinacion': [],
+        'temperaturaMotor': [],
+        'estadoMotor':[],
+        'estadoInclinacion':[]
+        })
     idSesion = {'objId':str(_id)}
     resServ = asyncio.run(clienteOpcua.send_id(str(_id)))
     if resServ == "Error servidor":
@@ -159,11 +170,19 @@ def add_session_tc():
         }
     }
     _id = sesiones.insert_one(sesion_doc).inserted_id
+    data.insert_one({
+        'id_sesion': str(_id),
+        'angulo': [],
+        'velocidad': [],
+        'tiempoActual': [],
+        'inclinacion': [],
+        'temperaturaMotor': [],
+        })
     idSesion = {'objId':str(_id)}
     resServ = asyncio.run(clienteOpcua.send_id(str(_id)))
-    if resServ == "Error servidor":
-        res = 'Error servidor'
-    else:
+    if resServ['mensaje'] == "Error servidor":
+        res = resServ['error']
+    elif resServ['mensaje'] == 'OK':
         res = idSesion
     return jsonify(res)
 
@@ -191,10 +210,11 @@ def update_params():
         }}
     )
     resServ =asyncio.run(clienteOpcua.set_params(flex, ext, vel, tim, sost, play))
-    if resServ == "Error servidor":
-        res = 'Error servidor'
-    else:
+    if resServ['mensaje'] == "Error servidor":
+        res = resServ['error']
+    elif resServ['mensaje'] == 'OK':
         res = 'Parámetros de la sesion actualizados'
+    
     return jsonify(res)
 
 @app.route('/observacion', methods=['POST'])
@@ -336,7 +356,7 @@ def getPacientes():
 def actualizar_sensores(id):
     sensores = sesiones.find_one({'_id': ObjectId(id)}, {'sensores': 1})
     ang = sensores['sensores']['angulo']
-    vel = sensores['sensores']['velocidad']
+    corr = sensores['sensores']['corriente']
     tiem = sensores['sensores']['tiempoActual']
     incl = sensores['sensores']['inclinacion']
     tempM = sensores['sensores']['temperaturaMotor']
@@ -344,7 +364,7 @@ def actualizar_sensores(id):
     res = [
         {
             'angulo': ang,
-            'velocidad': vel,
+            'corriente': corr,
             'tiempoActual': tiem,
             'inclinacion': incl,
             'temperaturaMotor': tempM

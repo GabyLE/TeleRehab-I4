@@ -22,6 +22,7 @@ const obtenerEstilos = makeStyles(theme => ({
 const Inicio = () => {
     const estilos = obtenerEstilos();
     const imagePath = `/assets/img/fondo.jpg`;
+    const imagePathLogo = `/assets/img/logo2.jpeg`;
 
     return (
         <section className={estilos.root}>
@@ -36,10 +37,11 @@ const Inicio = () => {
                     alignItems="center"
                     color="#fff"
                 >
-                    
+                    <img src={imagePathLogo} alt='logo' width="50%" height="50%" />
                     <Typography variant="h3" component="h1" sx={{ pb:4 }}>
                         TeleRehab I4
                     </Typography>
+                    <h6><i>Moviendo corazones desde la distancia</i></h6>
                 </Box>
             </div>
         </section>

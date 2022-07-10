@@ -53,11 +53,10 @@ export default function MenuAppBar() {
         <Box sx={{ flexGrow: 1 }}>
             <AppBar position="static">
                 <Toolbar>
-                <img src={imagePath} alt='Fondo' width="12%" height="12%"/>
+                <img src={imagePath} alt='logo' width="12%" height="12%"/>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1, m: 1 }}>
                         TeleRehab I4
                     </Typography>
-                    
                     <span sx={{ m: 0.5 }}>
                         <h6>{usuarioLogueado ? usuarioLogueado.nombre : ""}</h6>
                     </span>
@@ -85,7 +84,7 @@ export default function MenuAppBar() {
                     <Navegacion />
                 </AppBar>)}
 
-
+               
         </Box>
     );
 }

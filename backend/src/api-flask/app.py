@@ -252,21 +252,11 @@ def iniciar(id):
     vel = params['parametros']['velocidad']
     tim = params['parametros']['tiempoSesion']
     sost = params['parametros']['tiempoSostenimiento']
-    resServ =asyncio.run(clienteOpcua.set_params(flex, ext, vel, tim, sost,1))
-    if resServ == "Error servidor":
-        res = 'Error servidor'
-    else:
-        res = [
-            {
-                'flexion': flex,
-                'extension': ext,
-                'velocidad': vel,
-                'tiempo': tim,
-                'sostenimiento': sost,
-                'respuestaServidor': resServ
-            }
-        ] 
-    
+    resServ =asyncio.run(clienteOpcua.set_params(flex, ext, vel, tim, sost, 1))
+    if resServ['mensaje'] == "Error servidor":
+        res = resServ['error']
+    elif resServ['mensaje'] == 'OK':
+        res = {'respuestaServidor': 'Sesión iniciada'}
     
     return jsonify(res)
 
@@ -279,21 +269,11 @@ def pausar(id):
     vel = params['parametros']['velocidad']
     tim = params['parametros']['tiempoSesion']
     sost = params['parametros']['tiempoSostenimiento']
-    resServ =asyncio.run(clienteOpcua.set_params(flex, ext, vel, tim, sost,3))
-    if resServ == "Error servidor":
-        res = 'Error servidor'
-    else:
-        res = [
-            {
-                'flexion': flex,
-                'extension': ext,
-                'velocidad': vel,
-                'tiempo': tim,
-                'sostenimiento': sost,
-                'respuestaServidor': resServ
-            }
-        ] 
-        
+    resServ =asyncio.run(clienteOpcua.set_params(flex, ext, vel, tim, sost, 3))
+    if resServ['mensaje'] == "Error servidor":
+        res = resServ['error']
+    elif resServ['mensaje'] == 'OK':
+        res = {'respuestaServidor': 'Sesión pausada'}
     
     return jsonify(res)
     
@@ -306,22 +286,11 @@ def terminar(id):
     vel = params['parametros']['velocidad']
     tim = params['parametros']['tiempoSesion']
     sost = params['parametros']['tiempoSostenimiento']
-    resServ =asyncio.run(clienteOpcua.set_params(flex, ext, vel, tim, sost,4))
-
-    if resServ == "Error servidor":
-        res = 'Error servidor'
-    else:
-        res = [
-            {
-                'flexion': flex,
-                'extension': ext,
-                'velocidad': vel,
-                'tiempo': tim,
-                'sostenimiento': sost,
-                'respuestaServidor': resServ
-            }
-        ] 
-        
+    resServ =asyncio.run(clienteOpcua.set_params(flex, ext, vel, tim, sost, 4))
+    if resServ['mensaje'] == "Error servidor":
+        res = resServ['error']
+    elif resServ['mensaje'] == 'OK':
+        res = {'respuestaServidor': 'Sesión terminada'}
     
     return jsonify(res)
     

@@ -6,6 +6,8 @@ import Grid from '@mui/material/Grid';
 import { obtenerIdSesion } from '../../utils/Global';
 import CircleIcon from '@mui/icons-material/Circle';
 import { elementAcceptingRef } from '@mui/utils';
+import Mensaje from '../Mensaje';
+
 const API = process.env.REACT_APP_API;
 
 const Item = styled(Paper)(({ theme }) => ({
@@ -22,6 +24,13 @@ export const Estado = () => {
   const [motor, setMotor] = useState('inherit');
   const [alineacion, setAlineacion] = useState('inherit');
 
+  const [openMotor, setOpenMotor] = useState(false);
+    const handleOpenM = () => setOpenMotor(true);
+    const handleCloseM = () => setOpenMotor(false);
+
+    const [openAlineacion, setOpenAlineacion] = useState(false);
+    const handleOpenA = () => setOpenAlineacion(true);
+    const handleCloseA = () => setOpenAlineacion(false);
 
 
   const setEstados = async () => {
@@ -32,19 +41,23 @@ export const Estado = () => {
     data.map((item) => {
         if(item.motor == 1){
           setMotor('success');
-          console.log('successM')
+          handleCloseM();
+          console.log('successM');
         }
         else if (item.motor == 2) {
           setMotor('error');
+          handleOpenM();
           console.log('errorM')
         }
 
         if(item.alineacion == 1){
           setAlineacion('success');
+          handleCloseA();
           console.log('successA');
         }
         else if (item.alineacion == 2) {
           setAlineacion('error');
+          handleOpenA();
           console.log('errorA')
         }
     });
@@ -56,6 +69,7 @@ export const Estado = () => {
         clearInterval(interval);
     };
 }, []);
+
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -74,6 +88,20 @@ export const Estado = () => {
           </Item>
         </Grid>
       </Grid>
+
+      <Mensaje
+                    open={openAlineacion}
+                    titulo="Error en la Alineación"
+                    mensaje="Sesión pausada"
+                    cerrar={handleCloseA}
+                />
+
+<Mensaje
+                    open={openMotor}
+                    titulo="Error en el Motor"
+                    mensaje="Sesión pausada"
+                    cerrar={handleCloseM}
+                />
     </Box>
   );
 }

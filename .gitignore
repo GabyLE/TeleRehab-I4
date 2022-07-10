@@ -108,3 +108,4 @@ venv
 
 #configuraciones
 config
+backend/src/api-flask/__pycache__/

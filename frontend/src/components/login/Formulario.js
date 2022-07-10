@@ -30,7 +30,7 @@ const Formulario = ({ cerrarFormulario }) => {
 
     const enviarFormulario = (e) => {
         //Consumir la API para validar las credenciales
-        fetch(`${API}/login`, {
+        fetch(`${API}/usuarios/login`, {
             method: 'post',
             headers: {
                 'Content-Type': 'application/json',

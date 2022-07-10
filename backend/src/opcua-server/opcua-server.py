@@ -166,17 +166,17 @@ async def check_tempMotor(serial: SafeSerial,tempMN, esTempMN, playN):
     # enviar a posision de seguridad
     elif valor >= tempMaxMotor:
         await esTempMN.set_value(2, ua.VariantType.Int64)
-        loop = asyncio.get_event_loop()
-        async with serial.lock:
-            await serial.write(f"<S&{FLEX}&{EXT}&{VEL}&{TIM}&{SOST}&4>".encode())
-            # res = await serial.readline()
-            # trama = str(res.decode()).strip()
-            # arr_vals = getValues(trama, ":", "=")
+        # loop = asyncio.get_event_loop()
+        # async with serial.lock:
+        #     await serial.write(f"<S&{FLEX}&{EXT}&{VEL}&{TIM}&{SOST}&4>".encode())
+        #     # res = await serial.readline()
+        #     # trama = str(res.decode()).strip()
+        #     # arr_vals = getValues(trama, ":", "=")
             
         
-            # ctrlR = int(arr_vals[2])
-            # if ctrlR == 2:
-            await playN.set_value(4, ua.VariantType.Int64)
+        #     # ctrlR = int(arr_vals[2])
+        #     # if ctrlR == 2:
+        #     await playN.set_value(4, ua.VariantType.Int64)
             
         return 2
 async def check_alineacion(serial: SafeSerial,alinMN, esAlinMN, playN):
@@ -189,16 +189,16 @@ async def check_alineacion(serial: SafeSerial,alinMN, esAlinMN, playN):
     # enviar a posision de seguridad
     elif valor >= inclMax:
         await esAlinMN.set_value(2, ua.VariantType.Int64)
-        loop = asyncio.get_event_loop()
-        async with serial.lock:
-            await serial.write(f"<S&{FLEX}&{EXT}&{VEL}&{TIM}&{SOST}&4>".encode())
-            # res = await serial.readline()
-            # trama = str(res.decode()).strip()
-            # arr_vals = getValues(trama, ":", "=")
+        # loop = asyncio.get_event_loop()
+        # async with serial.lock:
+        #     await serial.write(f"<S&{FLEX}&{EXT}&{VEL}&{TIM}&{SOST}&4>".encode())
+        #     # res = await serial.readline()
+        #     # trama = str(res.decode()).strip()
+        #     # arr_vals = getValues(trama, ":", "=")
             
-            # ctrlR = int(arr_vals[2])
-            # if ctrlR == 2:
-            await playN.set_value(4, ua.VariantType.Int64)
+        #     # ctrlR = int(arr_vals[2])
+        #     # if ctrlR == 2:
+        #     await playN.set_value(4, ua.VariantType.Int64)
             
         return 2
 

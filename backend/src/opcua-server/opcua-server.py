@@ -1,3 +1,4 @@
+from socketserver import ThreadingUDPServer
 from asyncua import Server, uamethod, ua
 from serial import Serial
 import asyncio
@@ -10,7 +11,7 @@ from datetime import datetime
 
 # VARIABLES GLOBALES
 tempMaxMotor = 50
-inclMax = 10
+inclMax = 9
 FLEX = 0
 EXT = 0
 VEL = 0
@@ -205,10 +206,16 @@ async def check_alineacion(serial: SafeSerial,alinMN, esAlinMN, playN):
 async def main():
     #print("Available loggers are: ", logging.Logger.manager.loggerDict.keys())
     # Create serial connection
-    serial = SafeSerial(
-        os.environ.get("SERIAL") if os.environ.get("SERIAL") else "COM4",
-        os.environ.get("BAUD") if os.environ.get("BAUD") else 9600,
-    )
+    while True:
+        try:
+            serial = SafeSerial(
+                os.environ.get("SERIAL") if os.environ.get("SERIAL") else "COM4",
+                os.environ.get("BAUD") if os.environ.get("BAUD") else 9600,
+            )
+            break
+        except:
+            print("Conecte COM4")
+            
     # Initialize OPC-UA Server
     server = Server()
     await server.init()
